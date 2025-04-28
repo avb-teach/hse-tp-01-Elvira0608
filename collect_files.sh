@@ -2,21 +2,23 @@
 input_dir="$1"
 output_dir="$2"
 mkdir -p "$output_dir"
-counter=1
-for filepath in $(find "$input_dir" -type f); do
+maxdepth=""
+if [ "$3" == "--max_depth" ] && [ -n "$4" ]; then
+  maxdepth="-maxdepth $4"
+fi
+find "$input_dir" $maxdepth -type f | while read filepath; do
   filename=$(basename "$filepath")
-  if [ -e "$output_dir/$filename" ]; then
-    name="${filename%.*}"
+  dest="$output_dir/$filename"
+  if [ -e "$dest" ]; then
+    base="${filename%.*}"
     ext="${filename##*.}"
-    if [ "$name" == "$ext" ]; then
-      new_filename="${name}_${counter}"
-    else
-      new_filename="${name}_${counter}.${ext}"
-    fi
-
+    counter=1
+    while [ -e "$output_dir/${base}_${counter}.${ext}" ]; do
+      counter=$((counter + 1))
+    done
+    new_filename="${base}_${counter}.${ext}"
     cp "$filepath" "$output_dir/$new_filename"
-    counter=$((counter + 1))
   else
-    cp "$filepath" "$output_dir/$filename"
+    cp "$filepath" "$dest"
   fi
 done
